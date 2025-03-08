@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Plus } from "lucide-react"
@@ -10,12 +8,14 @@ interface MiniAppCardProps {
   title: string
   description: string
   icon: React.ReactNode
-  href: string
+  serviceType: string // Changed from href to serviceType
   color: string
   isAddCard?: boolean
 }
 
-export function MiniAppCard({ title, description, icon, href, color, isAddCard = false }: MiniAppCardProps) {
+export function MiniAppCard({ title, description, icon, serviceType, color, isAddCard = false }: MiniAppCardProps) {
+  const href = isAddCard ? "/apps/new" : `/apps/service?type=${serviceType}`
+
   return (
     <Link href={href}>
       <div className="group relative h-full">
@@ -39,4 +39,3 @@ export function MiniAppCard({ title, description, icon, href, color, isAddCard =
     </Link>
   )
 }
-

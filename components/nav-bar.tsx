@@ -5,12 +5,57 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { UserNav } from "@/components/user-nav"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { toast } from "react-hot-toast"
 
 export function NavBar() {
   const pathname = usePathname()
-  const [isAuthenticated] = useState(true) // Bunu auth state ile güncelleyeceksin
+  const router = useRouter()
+  const { isAuthenticated, isLoading, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
 
+  // Redirect to home page if not authenticated and on a protected route
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && (pathname.startsWith('/apps') || pathname === '/settings')) {
+      router.push('/');
+    }
+  }, [isAuthenticated, isLoading, pathname]);
+
+  const handleLogout = async () => {
+    try {
+      setOpen(false);
+  
+    
+  
+      await signOut();
+      
+      toast.success('Successfully logged out');
+      
+      // Sayfa yönlendirmesini biraz geciktir
+      setTimeout(() => {
+        router.push('/apps');
+      }, 100); // 100ms yeterli olur, daha uzun tutmaya gerek yok.
+  
+    } catch (error) {
+      toast.error('Error during logout');
+      console.error('Logout error:', error);
+    }
+  };
+  
+
+  if (isLoading) {
+    return (
+      <nav className="fixed top-0 w-full h-14 px-4 border-b shadow-sm bg-white flex items-center">
+        {/* Loading placeholder */}
+        <div className="animate-pulse w-full max-w-screen-2xl mx-auto flex items-center justify-between">
+          <div className="h-8 w-24 bg-gray-200 rounded"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+        </div>
+      </nav>
+    );
+  }
   const navItems = [
     
     { title: "My Apps", href: "/apps" },
@@ -49,17 +94,16 @@ export function NavBar() {
             )}
           </div>
 
+          
           <div className="flex items-center gap-4">
-            {isAuthenticated ? (
+            
+            { isAuthenticated ? (
+              //This div contains user navigation elements and is conditionally rendered based on authentication status.
+              // If the user is authenticated, render the UserNav component for user-specific actions.
               <UserNav />
             ) : (
+              // If the user is not authenticated, render nothing (empty fragment).
               <>
-                <Button variant="ghost" className="text-gray-400 hover:text-white" asChild>
-                  <Link href="/auth/register">Sign Up</Link>
-                </Button>
-                <Button className="bg-purple-600 hover:bg-purple-700" asChild>
-                  <Link href="/auth/login">Login</Link>
-                </Button>
               </>
             )}
           </div>

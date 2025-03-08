@@ -1,23 +1,39 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// This is a simplified example. In a real application, you would have proper
-// authentication token validation and user session management.
-export function middleware() {
-  return NextResponse.next()
+export function middleware(request: NextRequest) {
+  
+  const protectedPaths = [
+    "/apps",
+    "/settings",
+    "/profile",
+    "/apps/api-keys",
+  ];
+
+  const { pathname } = request.nextUrl;
+  const accessToken = request.cookies.get("accessToken")?.value;
+
+  const isProtectedRoute = protectedPaths.some((path) =>
+    pathname.startsWith(path)
+  );
+
+  // 🚫 Korumalı sayfa, token yoksa login'e yönlendir
+  if (isProtectedRoute && !accessToken) {
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 🔒 Auth sayfasında ama zaten giriş yapılmışsa apps'e yönlendir
+  if (pathname.startsWith("/auth/") && accessToken) {
+    return NextResponse.redirect(new URL("/apps", request.url));
+  }
+
+  return NextResponse.next();
 }
-
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
-}
-
+};

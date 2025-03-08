@@ -11,22 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Settings, User, CreditCard, LogOut } from "lucide-react"
+import { Settings, User, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function UserNav() {
   const router = useRouter()
-
-  const handleLogout = () => {
-    // 🧹 Clear stored tokens or session data
-    localStorage.removeItem("token")
-    sessionStorage.removeItem("token")
-    // If you're using cookies, also clear them here
-
-    // 🚀 Redirect to login page
-    router.push("/auth/login")
-  }
+  const { signOut } = useAuth();
+ 
 
   return (
     <DropdownMenu>
@@ -68,7 +62,7 @@ export function UserNav() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={handleLogout}
+          onClick={signOut}
           className="cursor-pointer text-red-500 focus:bg-red-500 focus:text-white"
         >
           <LogOut className="mr-2 h-4 w-4" />

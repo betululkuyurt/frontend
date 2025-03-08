@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/icons"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { setAuthTokens } from "@/lib/auth"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -16,47 +17,60 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
+    console.log("🚀 Login attempt started...")
     setError(null)
   
     if (!email || !password) {
       setError("Email and password are required")
+      console.log("❌ Validation failed: Missing email or password")
       return
     }
   
     setIsLoading(true)
-  
+    console.log("📨 Sending login request...")
     try {
       const formData = new URLSearchParams()
-      formData.append("username", email) // OAuth2PasswordRequestForm 'username' bekliyor
+      formData.append("username", email)
       formData.append("password", password)
   
       const response = await fetch("http://127.0.0.1:3000/api/v1/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
         },
-        body: formData.toString()
+        body: formData.toString(),
+        credentials: 'include'  // Added comma here
       })
   
       const data = await response.json()
-  
+      console.log("📥 Server response:", {
+        status: response.status,
+        ok: response.ok,
+        data: data
+      })
       if (!response.ok) {
         throw new Error(data.detail || "Login failed")
       }
-  
-      localStorage.setItem("token", data.access_token)
-      console.log(data.access_token)
-      console.log("Redirecting to /apps")
-      router.push('/apps')
-      useState(true);
+      console.log("✅ Login successful, setting tokens...")
+      // Set auth tokens in cookies
+      setAuthTokens(data.access_token, data.refresh_token)
+     // Get return URL from query params or default to /apps
+     const returnUrl = searchParams.get('from') || '/apps'
+     console.log("🔄 Redirecting to:", returnUrl) 
+     // Force a hard refresh to ensure all auth states are updated
+     window.location.href = returnUrl
+     
     } catch (error: any) {
       console.error("Login failed:", error)
       setError(error.message || "Authentication failed")
     } finally {
       setIsLoading(false)
+      console.log("🏁 Login process completed")
     }
   }
 
